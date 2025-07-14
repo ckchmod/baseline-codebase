@@ -2,6 +2,7 @@ from curses import meta
 import torchvision
 import numpy as np
 import torch
+import os
 from torch.utils.data import Dataset
 from typing import Tuple, Optional, Literal
 from batchgenerators.utilities.file_and_folder_operations import load_pickle
@@ -124,11 +125,20 @@ class PretrainDataset(Dataset):
         # single modality
         assert isinstance(case, str)
         data = self._load_volume(case)
+
+        # Ensure volume does not contain NaNs or Infs, which can sometimes
+        # occur in large pretraining datasets.
+        if np.isnan(data).any() or np.isinf(data).any():
+            if "DISABLE_NAN_WARNING" not in os.environ:
+                print("A case contains NaNs or infs. We have corrected this, but consider handling this with different preprocessing or skipping affected cases.")
+                print(f"Affected Case: {case}")
+                print("Set DISABLE_NAN_WARNING=1 to disable this warning.")
+            data = np.nan_to_num(data, nan=0.0, posinf=1.0, neginf=0.0, copy=True)
+
         data_dict = {
             "file_path": case
         }  # metadata that can be very useful for debugging.
         metadata = {"foreground_locations": []}
-
         data_dict["image"] = data
 
         return self._transform(data_dict, metadata)

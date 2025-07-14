@@ -2,7 +2,7 @@ task1_config = {
     "task_name": "Task001_FOMO1",
     "crop_to_nonzero": True,
     "deep_supervision": False,
-    "modalities": ("DWI", "T2FLAIR", "SWI_OR_T2STAR"),
+    "modalities": ("DWI", "T2FLAIR", "ADC", "SWI_OR_T2STAR"),
     "norm_op": "volume_wise_znorm",
     "num_classes": 2,
     "keep_aspect_ratio": True,

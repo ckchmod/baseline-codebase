@@ -14,7 +14,7 @@ The FOMO25 Challenge seeks to advance the field of medical image analysis by eva
 - April 15: Sanity-Check Code Access
 - June 15: Validation Leaderboard and Final Submission Pipeline Opens
 - August 20: Challenge Submission Deadline
-- September 22/28, 2025: Results Release at MICCAI 2025
+- September 27, 2025: Results Release at MICCAI 2025
 
 ## 📋 Tasks and Data
 

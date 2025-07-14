@@ -3,15 +3,15 @@
 import argparse
 
 from data.task_configs import task3_config
-from inference.predict import predict_from_config
+from inference.predict import predict_from_config, save_output_txt
 
 # Task-specific hardcoded configuration
 predict_config = {
     # Import values from task_configs
     **task3_config,
     # Add inference-specific configs
-    "model_path": "/path/to/pretrained/task3_model.pth",  # Replace with actual path to model
-    "patch_size": (32, 32, 32),
+    "model_path": "/app/model.ckpt",  # Path to model (inside container!)
+    "patch_size": (96, 96, 96),
 }
 
 
@@ -28,7 +28,7 @@ def main():
         "--t2", type=str, required=True, help="Path to T2 image (NIfTI format)"
     )
     parser.add_argument(
-        "--out", type=str, required=True, help="Output path for prediction"
+        "--output", type=str, required=True, help="Output path for prediction"
     )
 
     # Parse arguments
@@ -36,13 +36,15 @@ def main():
 
     # Map arguments to modality paths in expected order from task config
     modality_paths = [args.t1, args.t2]
+    output_path = args.output
 
     # Run prediction using the shared prediction logic
-    predict_from_config(
+    prediction, _ = predict_from_config(
         modality_paths=modality_paths,
-        output_path=args.out,
         predict_config=predict_config,
     )
+
+    save_output_txt(int(prediction[0, 0]), output_path)
 
 
 if __name__ == "__main__":

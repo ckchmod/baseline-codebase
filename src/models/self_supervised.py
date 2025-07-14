@@ -9,7 +9,10 @@ from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from yucca.functional.utils.kwargs import filter_kwargs
 
 from augmentations.mask import random_mask
+import utils.visualisation as viz
 from models import networks
+import warnings
+from lightning.pytorch.loggers import WandbLogger
 
 
 class SelfSupervisedModel(L.LightningModule):
@@ -32,7 +35,7 @@ class SelfSupervisedModel(L.LightningModule):
         compile_mode: str = None,
         debug_losses: bool = False,
         rec_loss_masked_only: bool = False,
-        norm_type: str = None,  # only for mednext
+        disable_image_logging: bool = False,
     ):
         super().__init__()
         # Model parameters
@@ -69,8 +72,7 @@ class SelfSupervisedModel(L.LightningModule):
         self.should_compile = should_compile
         self.compile_mode = compile_mode
 
-        # only mednext
-        self.norm_type = norm_type
+        self.disable_image_logging = disable_image_logging
 
         print(
             f"Compile settings are should_compile: {should_compile}, compile_mode: {compile_mode}"
@@ -97,9 +99,6 @@ class SelfSupervisedModel(L.LightningModule):
             "conv_op": conv_op,
             # Applies to most CNN-based architectures (exceptions: UXNet)
             "norm_op": norm_op,
-            # MedNeXt
-            "checkpoint_style": None,
-            "norm_type": self.norm_type if self.norm_type is not None else "group",
             # Pretrainnig
             "mode": "mae",
             "patch_size": self.patch_size,
@@ -119,13 +118,21 @@ class SelfSupervisedModel(L.LightningModule):
         assert (
             x.shape[1] == self.input_channels
         ), f"Expected {self.input_channels} input channels but got {x.shape[1]}"
-        assert (
-            0 <= x.min() and x.max() <= 1
-        ), "Intensities should be normalized to (0, 1)"
+
+        if not (0 <= x.min() and x.max() <= 1):
+            print(
+                f"Intensities of batch are not in (0, 1) but instead {(x.min(), x.max())}"
+            )
 
         y_hat, mask = self._augment_and_forward(x)
 
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+
+        if batch_idx == 0 and not self.disable_image_logging and not self.trainer.sanity_checking:
+            self._log_debug_images(x, y, y_hat, stage="train", file_paths=batch["file_path"], idx=0)
+
+        assert loss is not None, "Loss is None"
+        assert torch.isfinite(loss).all(), f"Loss is not finite: {loss}"
 
         self.log_dict({"train/loss": loss})
         return loss
@@ -137,12 +144,17 @@ class SelfSupervisedModel(L.LightningModule):
         assert (
             x.shape[1] == self.input_channels
         ), f"Expected {self.input_channels} input channels but got {x.shape[1]}"
-        assert (
-            0 <= x.min() and x.max() <= 1
-        ), f"Intensities should be normalized to (0, 1), but was {(x.min(), x.max())}"
+
+        if not (0 <= x.min() and x.max() <= 1):
+            print(
+                f"Intensities of batch are not in (0, 1) but instead {(x.min(), x.max())}"
+            )
 
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+
+        assert loss is not None, "Loss is None"
+        assert torch.isfinite(loss).all(), f"Loss is not finite: {loss}"
 
         self.log_dict({"val/loss": loss})
 
@@ -258,3 +270,17 @@ class SelfSupervisedModel(L.LightningModule):
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
+
+    def _log_debug_images(self, x, y, y_hat, stage, file_paths, idx=0):
+        examples = {}
+        if self.current_epoch % 5 == 0:
+            imgs = viz.get_imgs(x, y, y_hat, slice_dim=0, n=4, desc=file_paths[idx], idx=idx)
+            examples[f"{stage}/examples/imgs"] = imgs
+
+        if examples != {}:
+            wandb_logger = self.loggers[0]
+
+            assert isinstance(
+                wandb_logger, WandbLogger
+            ), f"Tried to log 3d image, but provided logger was not a Wandb logger, but instead {type(wandb_logger)}"
+            wandb_logger.experiment.log(examples)

@@ -45,12 +45,12 @@ def load_modalities(modality_paths: List[str]) -> List[nib.Nifti1Image]:
     return images
 
 
-def save_prediction(
-    prediction: np.ndarray, reference_img: nib.Nifti1Image, output_path: str
+def save_segmentation(
+    prediction: np.ndarray, affine: nib.Nifti1Image, output_path: str
 ):
     """Save prediction as a NIfTI file using affine from reference image."""
     # Create a new NIfTI image with the prediction data and reference affine
-    pred_nifti = nib.Nifti1Image(prediction, reference_img.affine)
+    pred_nifti = nib.Nifti1Image(prediction, affine)
 
     # Ensure output directory exists
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
@@ -63,17 +63,28 @@ def save_prediction(
     nib.save(pred_nifti, output_path)
 
 
+def save_output_txt(number: float | int, output_path: str):
+    """Save a number (float or int) as plain text to a file."""
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    if not output_path.endswith(".txt"):
+        output_path = output_path + ".txt"
+
+    with open(output_path, "w") as f:
+        f.write(f"{number}")
+
+
 def predict_from_config(
     modality_paths: List[str],
-    output_path: str,
     predict_config: Dict[str, Any],
+    reverse_preprocess: bool = False,
 ):
     """
     Run inference on input modality images using a task-specific configuration.
 
     Args:
         modality_paths: Paths to input modality images
-        output_path: Path where prediction will be saved
         predict_config: Dictionary containing all the configuration parameters for prediction
 
     Returns:
@@ -141,38 +152,20 @@ def predict_from_config(
             mirror=False,  # No test-time augmentation
             overlap=overlap,
             patch_size=patch_size,
-            sliding_window_prediction=True,
-            device=device,
+            sliding_window_prediction=task_type == "segmentation",
         )
 
-    # Reverse preprocessing
-    transpose_forward = [0, 1, 2]
-    transpose_backward = [0, 1, 2]
-
-    predictions_original, _ = reverse_preprocessing(
-        crop_to_nonzero=crop_to_nonzero,
-        images=predictions,
-        image_properties=case_properties,
-        n_classes=num_classes,
-        transpose_forward=transpose_forward,
-        transpose_backward=transpose_backward,
-    )
-
-    # Convert prediction to appropriate format based on task type
-    if task_type == "classification":
-        # For classification, apply softmax and take argmax
-        predictions_softmax = torch.nn.functional.softmax(
-            torch.from_numpy(predictions_original), dim=1
+    if reverse_preprocess:
+        predictions_original, _ = reverse_preprocessing(
+            crop_to_nonzero=crop_to_nonzero,
+            images=predictions,
+            image_properties=case_properties,
+            n_classes=num_classes,
+            transpose_forward=[0, 1, 2],
+            transpose_backward=[0, 1, 2],
         )
-        prediction_final = torch.argmax(predictions_softmax, dim=1)[0].numpy()
-    elif task_type == "regression":
-        # For regression, just take the raw prediction
-        prediction_final = predictions_original[0, 0]
-    else:  # Segmentation
-        # For segmentation, apply argmax
-        prediction_final = np.argmax(predictions_original[0], axis=0)
-
-    # Save the prediction
-    save_prediction(prediction_final, images[0], output_path)
-
-    return output_path
+        print(f"-- Prediction shape: {predictions_original.shape}")
+        return predictions_original, images[0].affine
+    else:
+        print(f"-- Prediction shape: {predictions.shape}")
+        return predictions, None
