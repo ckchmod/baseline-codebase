@@ -81,12 +81,18 @@ def main():
     parser.add_argument(
         "--checkpoint_every_n_epochs",
         type=int,
-        default=25,
+        default=1,
         help="Save a checkpoint every N epochs",
     )
 
     parser.add_argument(
         "--experiment", type=str, default="base_experiment", help="name of experiment"
+    )
+    parser.add_argument(
+        "--checkpoint_path", 
+        type=str, 
+        default=None,
+        help="Path to specific checkpoint file to resume from. If not specified, will resume from last checkpoint."
     )
 
     args = parser.parse_args()
@@ -162,7 +168,7 @@ def main():
         # Dataset metrics
         "train_dataset_size": len(splits_config.train(0)),
         "val_dataset_size": len(splits_config.val(0)),
-        # Trainer specific params
+        # Trainer specific params  
         "fast_dev_run": args.fast_dev_run,
         "limit_val_batches": args.limit_val_batches,
         "limit_train_batches": args.limit_train_batches,
@@ -256,7 +262,7 @@ def main():
         max_epochs=config["epochs"],
         precision=config["precision"],
         fast_dev_run=config["fast_dev_run"],
-        limit_val_batches=config["limit_val_batches"],
+        limit_val_batches=config["limit_val_batches" ],
         limit_train_batches=config["limit_train_batches"],
         overfit_batches=config["overfit_batches"],
         check_val_every_n_epoch=config["check_val_every_n_epoch"],
@@ -264,7 +270,9 @@ def main():
         accumulate_grad_batches=config["accumulate_grad_batches"],
     )
 
-    trainer.fit(model=model, datamodule=data, ckpt_path="last")
+    # Determine checkpoint path
+    ckpt_path = args.checkpoint_path if args.checkpoint_path else "last"
+    trainer.fit(model=model, datamodule=data, ckpt_path=ckpt_path)
     trainer.print(f"Memory used: {torch.cuda.max_memory_allocated() / 1e9:.02f} GB")
 
     # Close the wandb logging session

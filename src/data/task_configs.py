@@ -36,3 +36,16 @@ task3_config = {
     "label_extension": ".txt",
     "labels": {"regression": "Age"},  # Define as regression task
 }
+
+task4_config = {
+    "task_name": "Task004_PD",
+    "crop_to_nonzero": True,
+    "deep_supervision": False,
+    "modalities": ["T1"],
+    "norm_op": "volume_wise_znorm",
+    "num_classes": 2,
+    "keep_aspect_ratio": True,
+    "task_type": "classification",
+    "label_extension": ".txt",
+    "labels": {0: "Negative", 1: "Positive"},
+}

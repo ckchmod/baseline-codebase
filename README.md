@@ -58,7 +58,6 @@ This "Opinionated Preprocessing" can be done in the following way
 For preprocessing the pretraining (FOMO60K) data:
 
 ```bash
-python src/data/fomo-60k/preprocess.py --in_path=/path/to/raw/pretrain/data --out_path=/path/to/output/preprocessed/data
 ```
 
 This will:
@@ -94,14 +93,13 @@ To pretrain a model using the AMAES (Augmented Masked Autoencoder) framework:
 
 ```bash
 python src/pretrain.py \
-    --save_dir=/path/to/save/models \
-    --pretrain_data_dir=/path/to/preprocessed/pretrain/data \
+    --save_dir=/work/forkert_lab/fomo/models/ \
+    --pretrain_data_dir=/work/forkert_lab/fomo/preprocessed/FOMO60k \
     --model_name=unet_b_lw_dec \
     --patch_size=96 \
-    --batch_size=2 \
+    --batch_size=60 \
     --epochs=100 \
-    --warmup_epochs=5 \
-    --num_workers=64 \
+    --warmup_epochs=1 \
     --augmentation_preset=all
 ```
 
@@ -118,13 +116,13 @@ To finetune a pretrained model on one of the three tasks:
 
 ```bash
 python src/finetune.py \
-    --data_dir=/path/to/preprocessed/data \
-    --save_dir=/path/to/save/finetuned/models \
-    --pretrained_weights_path=/path/to/pretrained/checkpoint.pth \
+    --data_dir=/work/forkert_lab/fomo/PD/PD \
+    --save_dir=/work/forkert_lab/fomo/models/finetuned/pd \
+    --pretrained_weights_path=/work/forkert_lab/fomo/models/pretrained/FOMO60k/unet_b_lw_dec/versions/version_0/last.ckpt \
     --model_name=unet_b \
     --patch_size=96 \
-    --taskid=1 \
-    --batch_size=2 \
+    --taskid=4 \
+    --batch_size=16 \
     --epochs=500 \
     --train_batches_per_epoch=100 \
     --augmentation_preset=basic

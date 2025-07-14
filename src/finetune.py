@@ -33,7 +33,7 @@ from yucca.modules.data.datasets.YuccaDataset import YuccaTrainDataset
 from yucca.pipeline.configuration.split_data import get_split_config
 from yucca.pipeline.configuration.configure_paths import detect_version
 from data.dataset import FOMODataset
-from data.task_configs import task1_config, task2_config, task3_config
+from data.task_configs import task1_config, task2_config, task3_config, task4_config
 
 
 def get_task_config(taskid):
@@ -43,8 +43,10 @@ def get_task_config(taskid):
         task_cfg = task2_config
     elif taskid == 3:
         task_cfg = task3_config
+    elif taskid == 4:
+        task_cfg = task4_config
     else:
-        raise ValueError(f"Unknown taskid: {taskid}. Supported IDs are 1, 2, and 3")
+        raise ValueError(f"Unknown taskid: {taskid}. Supported IDs are 1, 2, 3, and 4")
 
     return task_cfg
 
@@ -101,7 +103,7 @@ def main():
         "--taskid",
         type=int,
         required=True,
-        help="Task ID (1: FOMO1 classification, 2: FOMO2 classification, 3: FOMO3 regression)",
+        help="Task ID (1: FOMO1 classification, 2: FOMO2 classification, 3: FOMO3 regression, 4: PD classification)",
     )
     # Split Configuration
     parser.add_argument("--split_method", type=str, default="simple_train_val_split")
@@ -114,9 +116,9 @@ def main():
     )
     args = parser.parse_args()
 
-    assert (
-        args.patch_size % 8 == 0
-    ), f"Patch size must be divisible by 8, got {args.patch_size}"
+    assert args.patch_size % 8 == 0, (
+        f"Patch size must be divisible by 8, got {args.patch_size}"
+    )
 
     # Set up task configuration
     task_cfg = get_task_config(args.taskid)
@@ -332,9 +334,9 @@ def main():
         num_successful_weights_transferred = model.load_state_dict(
             state_dict=state_dict, strict=False
         )
-        assert (
-            num_successful_weights_transferred > 0
-        ), "No weights were successfully transferred"
+        assert num_successful_weights_transferred > 0, (
+            "No weights were successfully transferred"
+        )
     else:
         print("Training from scratch, no weights will be transferred")
 
