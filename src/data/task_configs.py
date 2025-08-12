@@ -42,6 +42,7 @@ task4_config = {
     "crop_to_nonzero": True,
     "deep_supervision": False,
     "modalities": ["T1"],
+    "num_modalities": 1,
     "norm_op": "volume_wise_znorm",
     "num_classes": 2,
     "keep_aspect_ratio": True,
