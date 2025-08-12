@@ -156,6 +156,13 @@ class BaseSupervisedModel(L.LightningModule):
 
     def training_step(self, batch, _batch_idx):
         """Training step"""
+        input_channels = batch["image"].shape[1]
+        assert input_channels == self.num_modalities, (
+            f"Expected {self.num_modalities} input channels, but got {input_channels}. "
+            "This often happens when the task config has changed _after_ data has been preprocessed. "
+            "Check your data preprocessing."
+        )
+
         inputs, target, _ = self._process_batch(batch)
 
         output = self(inputs)
@@ -181,6 +188,13 @@ class BaseSupervisedModel(L.LightningModule):
 
     def validation_step(self, batch, _batch_idx):
         """Validation step"""
+        input_channels = batch["image"].shape[1]
+        assert input_channels == self.num_modalities, (
+            f"Expected {self.num_modalities} input channels, but got {input_channels}. "
+            "This often happens when the task config has changed _after_ data has been preprocessed. "
+            "Check your data preprocessing."
+        )
+
         inputs, target, _ = self._process_batch(batch)
 
         output = self(inputs)

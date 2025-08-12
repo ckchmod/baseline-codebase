@@ -129,7 +129,7 @@ def main():
     labels = task_cfg["labels"]
 
     run_type = "from_scratch" if args.pretrained_weights_path is None else "finetune"
-    experiment_name = f"{run_type}_{args.experiment}_{args.taskid}"
+    experiment_name = f"{run_type}_{args.model_name}_{args.experiment}_{args.taskid}"
 
     print(f"Using num_workers: {args.num_workers}, num_devices: {args.num_devices}")
     print(f"Task type: {task_type}")

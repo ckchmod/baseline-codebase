@@ -4,6 +4,12 @@ This repository contains the official baseline code for the FOMO25 Challenge, wh
 
 Please note: This codebase will be continually refined, so check back occasionally to get the latest updates.
 
+## Data and Model Download Links
+
+* FOMO-60K is available for download via [Huggingface](https://huggingface.co/datasets/FOMO25/FOMO-MRI).
+* Baseline models pretrained on FOMO-60K are available for download via [Huggingface](https://huggingface.co/FOMO25/baseline_pretrained_models).
+
+
 ## 🔍 Challenge Overview
 
 The FOMO25 Challenge seeks to advance the field of medical image analysis by evaluating the same pretrained models across multiple downstream tasks. Participants will first pretrain on a large unlabelled dataset and then evaluate their models on three clinical, multi-vendor, and multi-center datasets. For more information on the challenge, please visit the [FOMO25 Challenge website](https://fomo25.github.io).
@@ -130,7 +136,7 @@ python src/finetune.py \
 
 Key finetuning parameters:
 - `--taskid`: Task ID (1: Infarct Detection, 2: Meningioma Segmentation, 3: Brain Age Regression)
-- `--model_name`: Must match the architecture of the pretrained checkpoint
+- `--model_name`: Must match the architecture of the pretrained checkpoint *without `lw_dec`*, so if you pretrained with `unet_xl_lw_dec`, this should be `unet_xl`.
 - `--pretrained_weights_path`: Path to the pretrained model checkpoint
 - `--augmentation_preset`: Choose from `all`, `basic`, or `none`
 

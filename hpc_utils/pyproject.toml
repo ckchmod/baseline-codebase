@@ -7,7 +7,7 @@ name = "fomo-code"
 version = "0.1.0"
 description = "FOMO25 Challenge Codebase - Foundation Models for Brain MRI Analysis"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Asbjørn Munk"},
