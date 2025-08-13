@@ -13,5 +13,4 @@ class ClsRegHead(nn.Module):
         x = self.global_pool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
-        # Ensure output is float for regression tasks
-        return x.float()
+        return x
