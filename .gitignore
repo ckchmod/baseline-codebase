@@ -184,7 +184,6 @@ wandb/
 *.pth
 *.pt
 slurm_logs/
-slurm_scripts/
 *.err
 *.out
 *.job
@@ -195,3 +194,7 @@ bin/
 .dataenv
 .fomoenv
 data/*
+
+# Temporary files that we don't want to commit but should not be ignored in general
+*.tmp
+*.temp
